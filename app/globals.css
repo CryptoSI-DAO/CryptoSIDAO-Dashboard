@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a2e;
+  --accent-purple: #7c3aed;
+  --accent-indigo: #4f46e5;
+  --accent-pink: #ec4899;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border: #2d2d44;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+a {
+  color: var(--accent-purple);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent-pink);
+}
+
+/* Quorum bar */
+.quorum-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.quorum-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* Vote chart */
+.vote-bar-yes {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.vote-bar-no {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.vote-bar-abstain {
+  background: linear-gradient(90deg, #6b7280, #4b5563);
+}
