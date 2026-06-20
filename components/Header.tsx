@@ -16,9 +16,7 @@ export function Header() {
     <header className="border-b border-border bg-bg-secondary">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center text-white font-bold text-lg">
-            C
-          </div>
+          <img src="/logo.png" alt="CryptoSI DAO" className="w-10 h-10 rounded-lg" />
           <div>
             <h1 className="text-lg font-bold text-text-primary">CryptoSI DAO</h1>
             <p className="text-xs text-text-secondary">Governance Dashboard</p>

@@ -1,9 +1,27 @@
-import { getTokenInfo } from "@/lib/token";
+"use client";
 
-export const revalidate = 60;
+import { useState, useEffect } from "react";
+import { getTokenInfo, type TokenInfo } from "@/lib/token";
 
-export default async function TokenPage() {
-  const token = await getTokenInfo().catch(() => null);
+export default function TokenPage() {
+  const [token, setToken] = useState<TokenInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTokenInfo()
+      .then(setToken)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-bg-card rounded-xl border border-border p-6 h-32 animate-pulse" />
+        <div className="bg-bg-card rounded-xl border border-border p-6 h-48 animate-pulse" />
+      </div>
+    );
+  }
 
   if (!token) {
     return (
@@ -66,11 +84,7 @@ export default async function TokenPage() {
         <div className="space-y-3">
           <InfoRow
             label="Token Address"
-            value={
-              <span className="font-mono text-sm break-all">
-                {token.address}
-              </span>
-            }
+            value={<span className="font-mono text-sm break-all">{token.address}</span>}
           />
           <InfoRow
             label="DAO Address"
@@ -89,13 +103,7 @@ export default async function TokenPage() {
   );
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 py-2 border-b border-border/50 last:border-0">
       <span className="text-sm text-text-secondary">{label}</span>

@@ -33,7 +33,7 @@ export function Footer() {
             GitHub
           </a>
           <a
-            href="https://cryptosidaodao.tech/"
+            href="https://cryptosidao.org/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-text-secondary hover:text-accent-purple transition-colors text-sm"

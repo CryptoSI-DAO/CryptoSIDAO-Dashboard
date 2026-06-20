@@ -1,29 +1,55 @@
-import { getDaoMetadata } from "@/lib/ipfs";
+"use client";
+
+import { useState, useEffect } from "react";
+import { getDaoMetadata, type DaoMetadata } from "@/lib/ipfs";
 import {
-  getProposalCount,
   getAllProposals,
   enrichProposal,
+  getProposalCount,
   type ProposalWithVotes,
 } from "@/lib/proposals";
-import { getTokenInfo } from "@/lib/token";
+import { getTokenInfo, type TokenInfo } from "@/lib/token";
 import { ProposalCard } from "@/components/ProposalCard";
 
-// Revalidate every 60 seconds (ISR)
-export const revalidate = 60;
+export default function DashboardPage() {
+  const [metadata, setMetadata] = useState<DaoMetadata | null>(null);
+  const [proposalCount, setProposalCount] = useState<number>(0);
+  const [proposals, setProposals] = useState<ProposalWithVotes[]>([]);
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function DashboardPage() {
-  const [metadata, proposalCount, proposals, tokenInfo] = await Promise.all([
-    getDaoMetadata().catch(() => null),
-    getProposalCount().catch(() => BigInt(0)),
-    getAllProposals().catch(() => [] as ProposalWithVotes[]),
-    getTokenInfo().catch(() => null),
-  ]);
+  useEffect(() => {
+    Promise.all([
+      getDaoMetadata().catch(() => null),
+      getProposalCount().catch(() => BigInt(0)),
+      getAllProposals().catch(() => [] as ProposalWithVotes[]),
+      getTokenInfo().catch(() => null),
+    ]).then(([m, c, p, t]) => {
+      setMetadata(m);
+      setProposalCount(Number(c));
+      setProposals(p.map(enrichProposal));
+      setTokenInfo(t);
+      setLoading(false);
+    });
+  }, []);
 
-  const enrichedProposals = proposals.map(enrichProposal);
-  const activeProposals = enrichedProposals.filter(
+  const activeProposals = proposals.filter(
     (p) => p.status === "active" || p.status === "pending"
   );
-  const recentProposals = enrichedProposals.slice(0, 5);
+  const recentProposals = proposals.slice(0, 6);
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-bg-card rounded-xl border border-border p-6 h-32 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
+          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
+          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -72,7 +98,7 @@ export default async function DashboardPage() {
         <div className="bg-bg-card rounded-xl border border-border p-5">
           <p className="text-sm text-text-secondary mb-1">Total Proposals</p>
           <p className="text-3xl font-bold text-text-primary">
-            {Number(proposalCount).toLocaleString()}
+            {proposalCount.toLocaleString()}
           </p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-5">
@@ -94,9 +120,15 @@ export default async function DashboardPage() {
       {/* Active Proposals */}
       {activeProposals.length > 0 && (
         <div>
-          <h2 className="text-xl font-bold text-text-primary mb-4">
-            Active Proposals
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-text-primary">Active Proposals</h2>
+            <a
+              href="/proposals"
+              className="text-sm text-accent-purple hover:text-accent-pink transition-colors"
+            >
+              View All &rarr;
+            </a>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeProposals.map((proposal) => (
               <ProposalCard key={proposal.id} proposal={proposal} />
@@ -105,11 +137,11 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* All Proposals */}
+      {/* Recent Proposals */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-text-primary">
-            All Proposals
+            {activeProposals.length > 0 ? "Recent Proposals" : "All Proposals"}
           </h2>
           <a
             href="/proposals"
