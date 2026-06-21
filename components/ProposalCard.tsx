@@ -1,15 +1,8 @@
-import {
-  type ProposalWithVotes,
-  getProposalStatus,
-  formatTimestamp,
-  getTimeRemaining,
-  shortenAddress,
-  getArbiscanUrl,
-} from "@/lib/proposals";
+import { type Proposal, shortenAddress, getArbiscanUrl } from "@/lib/dao";
 import Link from "next/link";
 
 interface ProposalCardProps {
-  proposal: ProposalWithVotes;
+  proposal: Proposal;
 }
 
 export function ProposalCard({ proposal }: ProposalCardProps) {
@@ -18,9 +11,11 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     Pending: "bg-warning/20 text-warning border-warning/30",
     Executed: "bg-accent-purple/20 text-accent-purple border-accent-purple/30",
     Closed: "bg-text-secondary/20 text-text-secondary border-text-secondary/30",
+    Unknown: "bg-text-secondary/10 text-text-secondary border-text-secondary/20",
   };
 
-  const proposalLabel = `0x${proposal.id.slice(0, 6)}...${proposal.id.slice(-4)}`;
+  const statusLabel = proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1);
+  const proposalLabel = `0x${proposal.id.slice(0, 8)}...${proposal.id.slice(-4)}`;
 
   return (
     <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 hover:border-accent-purple/30 transition-colors">
@@ -33,12 +28,20 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
         </Link>
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium border flex-shrink-0 ${
-            statusColors[getProposalStatus(proposal)]
+            statusColors[statusLabel] || statusColors.Unknown
           }`}
         >
-          {getProposalStatus(proposal)}
+          {statusLabel}
         </span>
       </div>
+
+      {proposal.metadata?.name && (
+        <p className="text-sm text-text-primary mb-2 line-clamp-1">{proposal.metadata.name}</p>
+      )}
+
+      {proposal.metadata?.description && (
+        <p className="text-xs text-text-secondary mb-3 line-clamp-2">{proposal.metadata.description}</p>
+      )}
 
       <div className="text-xs text-text-secondary mb-2 md:mb-3 truncate">
         Creator:{" "}
@@ -52,41 +55,35 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
         </a>
       </div>
 
-      {/* Vote bar */}
-      <div className="flex h-1.5 md:h-2 rounded-full overflow-hidden mb-1.5 md:mb-2">
-        {proposal.yesPercent > 0 && (
-          <div
-            className="vote-bar-yes transition-all"
-            style={{ width: `${proposal.yesPercent}%` }}
-          />
-        )}
-        {proposal.abstainPercent > 0 && (
-          <div
-            className="vote-bar-abstain transition-all"
-            style={{ width: `${proposal.abstainPercent}%` }}
-          />
-        )}
-        {proposal.noPercent > 0 && (
-          <div
-            className="vote-bar-no transition-all"
-            style={{ width: `${proposal.noPercent}%` }}
-          />
-        )}
-      </div>
+      {proposal.tally.yes > 0n || proposal.tally.no > 0n ? (
+        <>
+          <div className="flex h-1.5 md:h-2 rounded-full overflow-hidden mb-1.5 md:mb-2">
+            {Number(proposal.tally.yes) > 0 && (
+              <div className="vote-bar-yes" style={{ width: `${yesPercent(proposal)}%` }} />
+            )}
+            {Number(proposal.tally.abstain) > 0 && (
+              <div className="vote-bar-abstain" style={{ width: `${abstainPercent(proposal)}%` }} />
+            )}
+            {Number(proposal.tally.no) > 0 && (
+              <div className="vote-bar-no" style={{ width: `${noPercent(proposal)}%` }} />
+            )}
+          </div>
+          <div className="flex justify-between text-[10px] md:text-xs text-text-secondary">
+            <span className="text-success">For: {yesPercent(proposal).toFixed(1)}%</span>
+            <span>Abstain: {abstainPercent(proposal).toFixed(1)}%</span>
+            <span className="text-danger">Against: {noPercent(proposal).toFixed(1)}%</span>
+          </div>
+        </>
+      ) : (
+        <div className="text-xs text-text-secondary py-1">
+          {proposal.metadataUri ? "Metadata available • " : ""}
+          {proposal.actions.length > 0 ? `${proposal.actions.length} action(s)` : "No on-chain data"}
+        </div>
+      )}
 
-      <div className="flex justify-between text-[10px] md:text-xs text-text-secondary mb-2 md:mb-3">
-        <span className="text-success">For: {proposal.yesPercent.toFixed(1)}%</span>
-        <span className="text-text-secondary hidden sm:inline">Abstain: {proposal.abstainPercent.toFixed(1)}%</span>
-        <span className="text-danger">Against: {proposal.noPercent.toFixed(1)}%</span>
-      </div>
-
-      <div className="flex justify-between text-[10px] md:text-xs text-text-secondary">
+      <div className="flex justify-between text-[10px] md:text-xs text-text-secondary mt-2">
         <span className="truncate">
-          {proposal.status === "active"
-            ? getTimeRemaining(proposal.parameters.endDate)
-            : proposal.status === "pending"
-            ? `Starts: ${formatTimestamp(proposal.parameters.startDate)}`
-            : `Ended: ${formatTimestamp(proposal.parameters.endDate)}`}
+          Block #{proposal.blockNumber.toLocaleString()}
         </span>
         <Link
           href={`/proposals/${proposal.id}`}
@@ -97,4 +94,19 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
       </div>
     </div>
   );
+}
+
+function yesPercent(p: Proposal): number {
+  const total = Number(p.tally.yes + p.tally.no + p.tally.abstain);
+  return total > 0 ? (Number(p.tally.yes) / total) * 100 : 0;
+}
+
+function noPercent(p: Proposal): number {
+  const total = Number(p.tally.yes + p.tally.no + p.tally.abstain);
+  return total > 0 ? (Number(p.tally.no) / total) * 100 : 0;
+}
+
+function abstainPercent(p: Proposal): number {
+  const total = Number(p.tally.yes + p.tally.no + p.tally.abstain);
+  return total > 0 ? (Number(p.tally.abstain) / total) * 100 : 0;
 }

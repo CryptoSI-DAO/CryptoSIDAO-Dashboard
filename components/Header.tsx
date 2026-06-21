@@ -7,7 +7,8 @@ import { useState } from "react";
 const navLinks = [
   { href: "/", label: "Dashboard" },
   { href: "/proposals", label: "Proposals" },
-  { href: "/token", label: "Token" },
+  { href: "/members", label: "Members" },
+  { href: "/assets", label: "Assets" },
 ];
 
 export function Header() {
@@ -16,7 +17,7 @@ export function Header() {
 
   return (
     <header className="border-b border-border bg-bg-secondary sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 md:py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 md:gap-3">
           <img src="/logo.png" alt="CryptoSI DAO" className="w-8 h-8 md:w-10 md:h-10 rounded-lg" />
           <div>
@@ -31,7 +32,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 lg:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 pathname === link.href
                   ? "bg-accent-purple text-white"
                   : "text-text-secondary hover:text-text-primary hover:bg-bg-card"

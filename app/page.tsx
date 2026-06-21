@@ -1,30 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDaoMetadata, type DaoMetadata } from "@/lib/ipfs";
-import {
-  getAllProposals,
-  enrichProposal,
-  type ProposalWithVotes,
-} from "@/lib/proposals";
-import { getTokenInfo, type TokenInfo } from "@/lib/token";
+import { getDaoMetadata, getAllProposals, getMembers, getAssets, type DaoMetadata, type Proposal, type Member, type Asset } from "@/lib/dao";
 import { ProposalCard } from "@/components/ProposalCard";
 
 export default function DashboardPage() {
   const [metadata, setMetadata] = useState<DaoMetadata | null>(null);
-  const [proposals, setProposals] = useState<ProposalWithVotes[]>([]);
-  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getDaoMetadata().catch(() => null),
-      getAllProposals().catch(() => [] as ProposalWithVotes[]),
-      getTokenInfo().catch(() => null),
-    ]).then(([m, p, t]) => {
+      getAllProposals().catch(() => []),
+      getMembers().catch(() => []),
+      getAssets().catch(() => []),
+    ]).then(([m, p, mem, a]) => {
       setMetadata(m);
-      setProposals(p.map(enrichProposal));
-      setTokenInfo(t);
+      setProposals(p);
+      setMembers(mem);
+      setAssets(a);
       setLoading(false);
     });
   }, []);
@@ -32,16 +29,16 @@ export default function DashboardPage() {
   const activeProposals = proposals.filter(
     (p) => p.status === "active" || p.status === "pending"
   );
-  const recentProposals = proposals.slice(0, 6);
+  const recentProposals = proposals.slice(0, 4);
 
   if (loading) {
     return (
       <div className="space-y-6 md:space-y-8">
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6 h-28 md:h-32 animate-pulse" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
-          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
-          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
+          ))}
         </div>
       </div>
     );
@@ -56,7 +53,8 @@ export default function DashboardPage() {
             <img
               src={metadata.avatar.replace("ipfs://", "https://ipfs.io/ipfs/")}
               alt={metadata.name}
-              className="w-12 h-12 md:w-16 md:h-16 rounded-xl flex-shrink-0"
+              className="w-12 h-12 md:w-16 md:h-16 rounded-xl flex-shrink-0 object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           )}
           <div className="min-w-0">
@@ -64,10 +62,8 @@ export default function DashboardPage() {
               {metadata?.name || "CryptoSI DAO"}
             </h1>
             <p className="text-xs md:text-sm text-text-secondary mt-1 line-clamp-2">
-              {metadata?.description?.slice(0, 150)}
-              {metadata?.description && metadata.description.length > 150
-                ? "..."
-                : ""}
+              {metadata?.description?.slice(0, 200)}
+              {metadata?.description && metadata.description.length > 200 ? "..." : ""}
             </p>
           </div>
         </div>
@@ -90,78 +86,93 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
-          <p className="text-xs md:text-sm text-text-secondary mb-1">Total Proposals</p>
-          <p className="text-2xl md:text-3xl font-bold text-text-primary">
-            {proposals.length}
-          </p>
+          <p className="text-xs text-text-secondary mb-1">Proposals</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">{proposals.length}</p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
-          <p className="text-xs md:text-sm text-text-secondary mb-1">Active Proposals</p>
-          <p className="text-2xl md:text-3xl font-bold text-accent-purple">
-            {activeProposals.length}
-          </p>
+          <p className="text-xs text-text-secondary mb-1">Active</p>
+          <p className="text-2xl md:text-3xl font-bold text-accent-purple">{activeProposals.length}</p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
-          <p className="text-xs md:text-sm text-text-secondary mb-1">Token Supply</p>
-          <p className="text-lg md:text-3xl font-bold text-text-primary truncate">
-            {tokenInfo
-              ? `${tokenInfo.totalSupplyFormatted} ${tokenInfo.symbol}`
-              : "—"}
-          </p>
+          <p className="text-xs text-text-secondary mb-1">Members</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">{members.length}</p>
+        </div>
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
+          <p className="text-xs text-text-secondary mb-1">Assets</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">{assets.length}</p>
         </div>
       </div>
 
-      {/* Active Proposals */}
-      {activeProposals.length > 0 && (
+      {/* Recent Proposals */}
+      {recentProposals.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-lg md:text-xl font-bold text-text-primary">Active Proposals</h2>
-            <a
-              href="/proposals"
-              className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors"
-            >
+            <h2 className="text-lg md:text-xl font-bold text-text-primary">Recent Proposals</h2>
+            <a href="/proposals" className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors">
               View All &rarr;
             </a>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {activeProposals.map((proposal) => (
+            {recentProposals.map((proposal) => (
               <ProposalCard key={proposal.id} proposal={proposal} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Recent Proposals */}
-      <div>
-        <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h2 className="text-lg md:text-xl font-bold text-text-primary">
-            {activeProposals.length > 0 ? "Recent Proposals" : "All Proposals"}
-          </h2>
-          <a
-            href="/proposals"
-            className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors"
-          >
-            View All &rarr;
-          </a>
-        </div>
-
-        {recentProposals.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {recentProposals.map((proposal) => (
-              <ProposalCard key={proposal.id} proposal={proposal} />
+      {/* Top Members */}
+      {members.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-bold text-text-primary">Top Members</h2>
+            <a href="/members" className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors">
+              View All &rarr;
+            </a>
+          </div>
+          <div className="bg-bg-card rounded-xl border border-border divide-y divide-border/50">
+            {members.slice(0, 5).map((member, index) => (
+              <div key={member.address} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-text-secondary font-mono w-5">#{index + 1}</span>
+                  <span className="text-sm text-text-primary font-mono">
+                    {member.address.slice(0, 6)}...{member.address.slice(-4)}
+                  </span>
+                </div>
+                <span className="text-sm text-text-secondary font-mono">{member.balance} CRDD</span>
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="bg-bg-card rounded-xl border border-border p-8 md:p-12 text-center">
-            <p className="text-text-secondary mb-2">No proposals yet</p>
-            <p className="text-xs md:text-sm text-text-secondary/60">
-              Proposals will appear here once they are created on-chain.
-            </p>
+        </div>
+      )}
+
+      {/* Assets Preview */}
+      {assets.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-bold text-text-primary">Treasury</h2>
+            <a href="/assets" className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors">
+              View All &rarr;
+            </a>
           </div>
-        )}
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            {assets.slice(0, 4).map((asset, index) => (
+              <div key={`${asset.address}-${index}`} className="bg-bg-card rounded-xl border border-border p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {asset.symbol.slice(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-sm text-text-primary font-medium">{asset.symbol}</p>
+                    <p className="text-xs text-text-secondary">{asset.balance}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
