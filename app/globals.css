@@ -18,10 +18,18 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
 }
 
 a {
@@ -32,6 +40,28 @@ a {
 
 a:hover {
   color: var(--accent-pink);
+}
+
+/* Prevent horizontal overflow on mobile */
+main {
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar for horizontal scroll areas (filter chips) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Quorum bar */
@@ -59,4 +89,12 @@ a:hover {
 
 .vote-bar-abstain {
   background: linear-gradient(90deg, #6b7280, #4b5563);
+}
+
+/* Ensure touch targets are at least 44px on mobile */
+@media (max-width: 768px) {
+  a, button {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

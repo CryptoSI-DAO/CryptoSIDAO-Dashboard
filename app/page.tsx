@@ -40,34 +40,34 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="bg-bg-card rounded-xl border border-border p-6 h-32 animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
-          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
-          <div className="bg-bg-card rounded-xl border border-border p-5 h-24 animate-pulse" />
+      <div className="space-y-6 md:space-y-8">
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6 h-28 md:h-32 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
+          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
+          <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 h-20 md:h-24 animate-pulse" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* DAO Header */}
-      <div className="bg-bg-card rounded-xl border border-border p-6">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
+        <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
           {metadata?.avatar && (
             <img
               src={metadata.avatar.replace("ipfs://", "https://ipfs.io/ipfs/")}
               alt={metadata.name}
-              className="w-16 h-16 rounded-xl"
+              className="w-12 h-12 md:w-16 md:h-16 rounded-xl flex-shrink-0"
             />
           )}
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold text-text-primary truncate">
               {metadata?.name || "CryptoSI DAO"}
             </h1>
-            <p className="text-sm text-text-secondary mt-1">
+            <p className="text-xs md:text-sm text-text-secondary mt-1 line-clamp-2">
               {metadata?.description?.slice(0, 150)}
               {metadata?.description && metadata.description.length > 150
                 ? "..."
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1 bg-bg-secondary rounded-lg text-xs text-text-secondary hover:text-accent-purple transition-colors"
+                className="px-3 py-1.5 bg-bg-secondary rounded-lg text-xs text-text-secondary hover:text-accent-purple transition-colors"
               >
                 {link.name}
               </a>
@@ -94,22 +94,22 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <p className="text-sm text-text-secondary mb-1">Total Proposals</p>
-          <p className="text-3xl font-bold text-text-primary">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
+          <p className="text-xs md:text-sm text-text-secondary mb-1">Total Proposals</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">
             {proposalCount.toLocaleString()}
           </p>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <p className="text-sm text-text-secondary mb-1">Active Proposals</p>
-          <p className="text-3xl font-bold text-accent-purple">
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
+          <p className="text-xs md:text-sm text-text-secondary mb-1">Active Proposals</p>
+          <p className="text-2xl md:text-3xl font-bold text-accent-purple">
             {activeProposals.length}
           </p>
         </div>
-        <div className="bg-bg-card rounded-xl border border-border p-5">
-          <p className="text-sm text-text-secondary mb-1">Token Supply</p>
-          <p className="text-3xl font-bold text-text-primary">
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
+          <p className="text-xs md:text-sm text-text-secondary mb-1">Token Supply</p>
+          <p className="text-lg md:text-3xl font-bold text-text-primary truncate">
             {tokenInfo
               ? `${tokenInfo.totalSupplyFormatted} ${tokenInfo.symbol}`
               : "—"}
@@ -120,16 +120,16 @@ export default function DashboardPage() {
       {/* Active Proposals */}
       {activeProposals.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-text-primary">Active Proposals</h2>
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-bold text-text-primary">Active Proposals</h2>
             <a
               href="/proposals"
-              className="text-sm text-accent-purple hover:text-accent-pink transition-colors"
+              className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors"
             >
               View All &rarr;
             </a>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             {activeProposals.map((proposal) => (
               <ProposalCard key={proposal.id} proposal={proposal} />
             ))}
@@ -139,28 +139,28 @@ export default function DashboardPage() {
 
       {/* Recent Proposals */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-text-primary">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="text-lg md:text-xl font-bold text-text-primary">
             {activeProposals.length > 0 ? "Recent Proposals" : "All Proposals"}
           </h2>
           <a
             href="/proposals"
-            className="text-sm text-accent-purple hover:text-accent-pink transition-colors"
+            className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors"
           >
             View All &rarr;
           </a>
         </div>
 
         {recentProposals.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             {recentProposals.map((proposal) => (
               <ProposalCard key={proposal.id} proposal={proposal} />
             ))}
           </div>
         ) : (
-          <div className="bg-bg-card rounded-xl border border-border p-12 text-center">
+          <div className="bg-bg-card rounded-xl border border-border p-8 md:p-12 text-center">
             <p className="text-text-secondary mb-2">No proposals yet</p>
-            <p className="text-sm text-text-secondary/60">
+            <p className="text-xs md:text-sm text-text-secondary/60">
               Proposals will appear here once they are created on-chain.
             </p>
           </div>
