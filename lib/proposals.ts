@@ -1,6 +1,13 @@
-import { publicClient, governancePluginContract, DAO_ADDRESS } from "./contracts";
+import { decodeEventLog } from "viem";
+import { publicClient, governancePluginContract, GOVERNANCE_PLUGIN_ADDRESS, PROPOSAL_CREATED_EVENT_ABI } from "./contracts";
 
 export type VoteOption = "abstain" | "yes" | "no";
+
+export interface ProposalAction {
+  to: string;
+  value: bigint;
+  data: string;
+}
 
 export interface ProposalTally {
   abstain: bigint;
@@ -8,15 +15,26 @@ export interface ProposalTally {
   no: bigint;
 }
 
+export interface ProposalParameters {
+  votingMode: number;
+  supportThreshold: number;
+  startDate: bigint;
+  endDate: bigint;
+  snapshotTimepoint: bigint;
+  minVotingPower: bigint;
+}
+
 export interface Proposal {
-  id: number;
+  id: string; // bytes32 proposal ID (hex)
   executed: boolean;
-  votingStart: bigint;
-  votingEnd: bigint;
+  open: boolean;
+  parameters: ProposalParameters;
   tally: ProposalTally;
+  actions: ProposalAction[];
+  allowFailureMap: bigint;
   creator: string;
+  metadata: string;
   status: "pending" | "active" | "executed" | "defeated";
-  description?: string;
 }
 
 export interface ProposalWithVotes extends Proposal {
@@ -26,33 +44,75 @@ export interface ProposalWithVotes extends Proposal {
   abstainPercent: number;
 }
 
-const ARBITRUM_BLOCK_TIME_SECONDS = 0.25; // ~250ms per block
+// ── Event-based proposal discovery ─────────────────────────────────────────
 
-export async function getProposalCount(): Promise<bigint> {
-  return publicClient.readContract({
-    ...governancePluginContract,
-    functionName: "proposalCount",
-  });
+/**
+ * Discover all proposals by scanning ProposalCreated events from the governance plugin.
+ * This is the reliable way to find proposals since there's no proposalCount() function.
+ */
+export async function getAllProposalIds(): Promise<{ id: string; creator: string }[]> {
+  try {
+    const latestBlock = await publicClient.getBlockNumber();
+    const fromBlock = latestBlock - 50000n > 0n ? latestBlock - 50000n : 0n;
+
+    const logs = await publicClient.getLogs({
+      address: GOVERNANCE_PLUGIN_ADDRESS,
+      fromBlock,
+      toBlock: latestBlock,
+    });
+
+    const results: { id: string; creator: string }[] = [];
+
+    for (const log of logs as any[]) {
+      // Decode the log manually using the ABI
+      try {
+        const decoded = decodeEventLog({
+          abi: [PROPOSAL_CREATED_EVENT_ABI] as const,
+          data: log.data,
+          topics: log.topics as any,
+        });
+        if (decoded.eventName === "ProposalCreated" && decoded.args) {
+          const args = decoded.args as any;
+          const proposalIdHex = "0x" + (args.proposalId as bigint).toString(16).padStart(64, "0");
+          results.push({
+            id: proposalIdHex,
+            creator: args.creator as string,
+          });
+        }
+      } catch {
+        // Not a ProposalCreated event, skip
+      }
+    }
+
+    return results;
+  } catch (e) {
+    console.error("Failed to fetch proposal IDs from events:", e);
+    return [];
+  }
 }
 
-export async function getProposal(id: number): Promise<Proposal | null> {
+// ── Individual proposal fetching ───────────────────────────────────────────
+
+export async function getProposal(id: string): Promise<Proposal | null> {
   try {
+    const proposalIdBigInt = BigInt("0x" + id);
+
     const result = await publicClient.readContract({
       ...governancePluginContract,
       functionName: "getProposal",
-      args: [BigInt(id)],
+      args: [proposalIdBigInt],
     });
 
-    const [executed, parameters, tally, creator] = result;
+    const [open, executed, parameters, tally, actions, allowFailureMap] = result;
 
     const now = BigInt(Math.floor(Date.now() / 1000));
     let status: Proposal["status"] = "pending";
 
     if (executed) {
       status = "executed";
-    } else if (now < parameters.votingStart) {
+    } else if (now < parameters.startDate) {
       status = "pending";
-    } else if (now >= parameters.votingStart && now <= parameters.votingEnd) {
+    } else if (now >= parameters.startDate && now <= parameters.endDate) {
       status = "active";
     } else {
       status = "defeated";
@@ -61,31 +121,52 @@ export async function getProposal(id: number): Promise<Proposal | null> {
     return {
       id,
       executed,
-      votingStart: parameters.votingStart,
-      votingEnd: parameters.votingEnd,
+      open,
+      parameters: {
+        votingMode: parameters.votingMode,
+        supportThreshold: parameters.supportThreshold,
+        startDate: parameters.startDate,
+        endDate: parameters.endDate,
+        snapshotTimepoint: parameters.snapshotTimepoint,
+        minVotingPower: parameters.minVotingPower,
+      },
       tally: {
         abstain: tally.abstain,
         yes: tally.yes,
         no: tally.no,
       },
-      creator,
+      actions: actions.map((a: any) => ({
+        to: a.to,
+        value: a.value,
+        data: a.data,
+      })),
+      allowFailureMap,
+      creator: "0x0000000000000000000000000000000000000000", // Will be filled from events
+      metadata: "",
       status,
     };
-  } catch {
+  } catch (e) {
+    console.error(`Failed to fetch proposal ${id}:`, e);
     return null;
   }
 }
 
+// ── Batch operations ───────────────────────────────────────────────────────
+
 export async function getAllProposals(): Promise<Proposal[]> {
-  const count = await getProposalCount();
+  const proposalIds = await getAllProposalIds();
   const proposals: Proposal[] = [];
 
-  for (let i = Number(count); i >= 1; i--) {
-    const proposal = await getProposal(i);
+  for (const { id, creator } of proposalIds) {
+    const proposal = await getProposal(id);
     if (proposal) {
+      proposal.creator = creator;
       proposals.push(proposal);
     }
   }
+
+  // Sort by start date descending (newest first)
+  proposals.sort((a, b) => Number(b.parameters.startDate - a.parameters.startDate));
 
   return proposals;
 }
@@ -94,6 +175,8 @@ export async function getActiveProposals(): Promise<Proposal[]> {
   const all = await getAllProposals();
   return all.filter((p) => p.status === "active" || p.status === "pending");
 }
+
+// ── Enrichment helpers ─────────────────────────────────────────────────────
 
 export function enrichProposal(proposal: Proposal): ProposalWithVotes {
   const totalVotes =

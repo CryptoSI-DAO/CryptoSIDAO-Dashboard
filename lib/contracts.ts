@@ -1,4 +1,4 @@
-import { createPublicClient, http, fallback } from "viem";
+import { createPublicClient, http, fallback, decodeEventLog, getContract } from "viem";
 import { arbitrum } from "viem/chains";
 
 // ── Contracts ──────────────────────────────────────────────────────────────
@@ -23,8 +23,7 @@ export const publicClient = createPublicClient({
 
 // ── ABIs ───────────────────────────────────────────────────────────────────
 
-// Minimal DAO proxy ABI (ERC-1967) — proxy delegates to implementation
-// We call through the proxy for daoURI and plugin info
+// Minimal DAO proxy ABI (ERC-1967)
 export const DAO_PROXY_ABI = [
   {
     name: "daoURI",
@@ -75,33 +74,56 @@ export const ERC20_ABI = [
 ] as const;
 
 // Aragon OSx Governance Plugin ABI (token voting)
-// Covers the core proposal + voting interface
+// Matches the actual TokenVoting.sol / MajorityVotingBase.sol interface
 export const GOVERNANCE_PLUGIN_ABI = [
-  {
-    name: "proposalCount",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
   {
     name: "getProposal",
     type: "function",
     stateMutability: "view",
     inputs: [{ name: "_proposalId", type: "uint256" }],
     outputs: [
+      { name: "open", type: "bool" },
       { name: "executed", type: "bool" },
-      { name: "parameters", type: "tuple", components: [
-        { name: "votingStart", type: "uint64" },
-        { name: "votingEnd", type: "uint64" },
-      ]},
-      { name: "tally", type: "tuple", components: [
-        { name: "abstain", type: "uint256" },
-        { name: "yes", type: "uint256" },
-        { name: "no", type: "uint256" },
-      ]},
-      { name: "creator", type: "address" },
-      { name: "allowFailureMap", type: "uint128" },
+      {
+        name: "parameters",
+        type: "tuple",
+        components: [
+          { name: "votingMode", type: "uint8" },
+          { name: "supportThreshold", type: "uint32" },
+          { name: "startDate", type: "uint64" },
+          { name: "endDate", type: "uint64" },
+          { name: "snapshotTimepoint", type: "uint64" },
+          { name: "minVotingPower", type: "uint256" },
+        ],
+      },
+      {
+        name: "tally",
+        type: "tuple",
+        components: [
+          { name: "abstain", type: "uint256" },
+          { name: "yes", type: "uint256" },
+          { name: "no", type: "uint256" },
+        ],
+      },
+      {
+        name: "actions",
+        type: "tuple[]",
+        components: [
+          { name: "to", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "data", type: "bytes" },
+        ],
+      },
+      { name: "allowFailureMap", type: "uint256" },
+      {
+        name: "targetConfig",
+        type: "tuple",
+        components: [
+          { name: "target", type: "address" },
+          { name: "operation", type: "uint8" },
+          { name: "ethValue", type: "uint256" },
+        ],
+      },
     ],
   },
   {
@@ -121,9 +143,61 @@ export const GOVERNANCE_PLUGIN_ABI = [
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
+  {
+    name: "supportThreshold",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint32" }],
+  },
+  {
+    name: "minParticipation",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint32" }],
+  },
+  {
+    name: "canExecute",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "_proposalId", type: "uint256" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    name: "hasSucceeded",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "_proposalId", type: "uint256" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
 ] as const;
 
-// Aragon OSx DAO ABI (implementation) — for plugin enumeration
+// Event ABI for proposal discovery via event logs
+export const PROPOSAL_CREATED_EVENT_ABI = {
+  name: "ProposalCreated",
+  type: "event" as const,
+  inputs: [
+    { name: "proposalId", type: "uint256", indexed: true },
+    { name: "creator", type: "address", indexed: true },
+    { name: "startDate", type: "uint64", indexed: false },
+    { name: "endDate", type: "uint64", indexed: false },
+    { name: "metadata", type: "bytes", indexed: false },
+    {
+      name: "actions",
+      type: "tuple[]",
+      indexed: false,
+      components: [
+        { name: "to", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "data", type: "bytes" },
+      ],
+    },
+    { name: "allowFailureMap", type: "uint256", indexed: false },
+  ],
+} as const;
+
+// Aragon OSx DAO ABI (implementation)
 export const DAO_IMPLEMENTATION_ABI = [
   {
     name: "daoURI",
@@ -132,17 +206,10 @@ export const DAO_IMPLEMENTATION_ABI = [
     inputs: [],
     outputs: [{ name: "", type: "string" }],
   },
-  {
-    name: "getPlugin",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "pluginSetupRef", type: "bytes32" }],
-    outputs: [{ name: "", type: "address" }],
-  },
 ] as const;
 
 // ────────────────────────────────────────────────────────────────────────────
-// WAGMI-style typed contract references (use with useReadContract on client)
+// Contract references
 // ────────────────────────────────────────────────────────────────────────────
 
 export const daoContract = {

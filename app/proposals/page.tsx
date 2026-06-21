@@ -21,6 +21,8 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
     defeated: "bg-text-secondary/20 text-text-secondary",
   };
 
+  const proposalLabel = `0x${proposal.id.slice(0, 8)}...${proposal.id.slice(-4)}`;
+
   return (
     <div className="space-y-4 md:space-y-6">
       <button
@@ -34,10 +36,10 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div>
             <p className="text-xs md:text-sm text-text-secondary mb-1">
-              Proposal #{proposal.id}
+              Proposal
             </p>
-            <h1 className="text-xl md:text-2xl font-bold text-text-primary">
-              Proposal #{proposal.id}
+            <h1 className="text-lg md:text-2xl font-bold text-text-primary font-mono break-all">
+              {proposalLabel}
             </h1>
           </div>
           <span
@@ -62,13 +64,13 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
           <div>
             <p className="text-text-secondary">Voting Start</p>
             <p className="text-text-primary font-medium text-xs md:text-sm">
-              {formatTimestamp(proposal.votingStart)}
+              {formatTimestamp(proposal.parameters.startDate)}
             </p>
           </div>
           <div>
             <p className="text-text-secondary">Voting End</p>
             <p className="text-text-primary font-medium text-xs md:text-sm">
-              {formatTimestamp(proposal.votingEnd)}
+              {formatTimestamp(proposal.parameters.endDate)}
             </p>
           </div>
           <div>
@@ -79,6 +81,47 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
           </div>
         </div>
       </div>
+
+      {/* Actions */}
+      {proposal.actions.length > 0 && (
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
+          <h2 className="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">
+            Actions ({proposal.actions.length})
+          </h2>
+          <div className="space-y-3">
+            {proposal.actions.map((action, i) => (
+              <div key={i} className="bg-bg-secondary rounded-lg p-3 md:p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-accent-purple bg-accent-purple/10 px-2 py-0.5 rounded">
+                    #{i + 1}
+                  </span>
+                  <a
+                    href={getArbiscanUrl("address", action.to)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-purple hover:text-accent-pink font-mono text-xs break-all"
+                  >
+                    {shortenAddress(action.to)}
+                  </a>
+                </div>
+                {action.value > 0n && (
+                  <p className="text-xs text-text-secondary mb-1">
+                    Value: {action.value.toString()} wei
+                  </p>
+                )}
+                {action.data && action.data !== "0x" && (
+                  <div className="mt-2">
+                    <p className="text-[10px] text-text-secondary mb-1">Calldata:</p>
+                    <code className="text-[10px] text-text-secondary font-mono break-all block bg-bg-primary rounded p-2 max-h-24 overflow-y-auto">
+                      {action.data.slice(0, 100)}{action.data.length > 100 ? "..." : ""}
+                    </code>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
         <h2 className="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">Vote Results</h2>
@@ -146,6 +189,10 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
         <h2 className="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">On-Chain Info</h2>
         <div className="space-y-3 text-sm">
           <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+            <span className="text-text-secondary">Proposal ID</span>
+            <span className="text-text-primary font-mono text-xs break-all">{proposal.id}</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
             <span className="text-text-secondary">DAO Address</span>
             <a
               href={getArbiscanUrl("address", "0xA736319152057f9c3beb556EeE76Ea56598FFa13")}
@@ -192,13 +239,17 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
     defeated: "Closed",
   };
 
+  const proposalLabel = `0x${proposal.id.slice(0, 6)}...${proposal.id.slice(-4)}`;
+
   return (
     <div
       className="bg-bg-card rounded-xl border border-border p-3 md:p-4 hover:border-accent-purple/30 transition-colors cursor-pointer"
       onClick={onSelect}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-text-primary font-semibold text-sm md:text-base">Proposal #{proposal.id}</span>
+        <span className="text-text-primary font-semibold text-sm md:text-base font-mono truncate">
+          {proposalLabel}
+        </span>
         <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium border flex-shrink-0 ${statusColors[statusLabels[proposal.status]]}`}>
           {statusLabels[proposal.status]}
         </span>
@@ -216,7 +267,7 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
           {shortenAddress(proposal.creator)}
         </a>
         <span className="mx-1 md:mx-2">&middot;</span>
-        {formatTimestamp(proposal.votingEnd)}
+        {formatTimestamp(proposal.parameters.endDate)}
       </div>
 
       <div className="flex h-1.5 md:h-2 rounded-full overflow-hidden mb-1.5 md:mb-2">
@@ -243,7 +294,7 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
 export default function ProposalsPage() {
   const [proposals, setProposals] = useState<ProposalWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedProposal, setSelectedProposal] = useState<ProposalWithVotes | null>(null);
   const [filter, setFilter] = useState<string>("all");
 

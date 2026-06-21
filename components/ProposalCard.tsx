@@ -20,14 +20,16 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     Closed: "bg-text-secondary/20 text-text-secondary border-text-secondary/30",
   };
 
+  const proposalLabel = `0x${proposal.id.slice(0, 6)}...${proposal.id.slice(-4)}`;
+
   return (
     <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5 hover:border-accent-purple/30 transition-colors">
       <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
         <Link
           href={`/proposals/${proposal.id}`}
-          className="text-text-primary font-semibold hover:text-accent-purple transition-colors text-sm md:text-base truncate"
+          className="text-text-primary font-semibold hover:text-accent-purple transition-colors text-sm md:text-base font-mono truncate"
         >
-          Proposal #{proposal.id}
+          {proposalLabel}
         </Link>
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium border flex-shrink-0 ${
@@ -81,10 +83,10 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
       <div className="flex justify-between text-[10px] md:text-xs text-text-secondary">
         <span className="truncate">
           {proposal.status === "active"
-            ? getTimeRemaining(proposal.votingEnd)
+            ? getTimeRemaining(proposal.parameters.endDate)
             : proposal.status === "pending"
-            ? `Starts: ${formatTimestamp(proposal.votingStart)}`
-            : `Ended: ${formatTimestamp(proposal.votingEnd)}`}
+            ? `Starts: ${formatTimestamp(proposal.parameters.startDate)}`
+            : `Ended: ${formatTimestamp(proposal.parameters.endDate)}`}
         </span>
         <Link
           href={`/proposals/${proposal.id}`}

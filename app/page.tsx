@@ -5,7 +5,6 @@ import { getDaoMetadata, type DaoMetadata } from "@/lib/ipfs";
 import {
   getAllProposals,
   enrichProposal,
-  getProposalCount,
   type ProposalWithVotes,
 } from "@/lib/proposals";
 import { getTokenInfo, type TokenInfo } from "@/lib/token";
@@ -13,7 +12,6 @@ import { ProposalCard } from "@/components/ProposalCard";
 
 export default function DashboardPage() {
   const [metadata, setMetadata] = useState<DaoMetadata | null>(null);
-  const [proposalCount, setProposalCount] = useState<number>(0);
   const [proposals, setProposals] = useState<ProposalWithVotes[]>([]);
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,12 +19,10 @@ export default function DashboardPage() {
   useEffect(() => {
     Promise.all([
       getDaoMetadata().catch(() => null),
-      getProposalCount().catch(() => BigInt(0)),
       getAllProposals().catch(() => [] as ProposalWithVotes[]),
       getTokenInfo().catch(() => null),
-    ]).then(([m, c, p, t]) => {
+    ]).then(([m, p, t]) => {
       setMetadata(m);
-      setProposalCount(Number(c));
       setProposals(p.map(enrichProposal));
       setTokenInfo(t);
       setLoading(false);
@@ -98,7 +94,7 @@ export default function DashboardPage() {
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
           <p className="text-xs md:text-sm text-text-secondary mb-1">Total Proposals</p>
           <p className="text-2xl md:text-3xl font-bold text-text-primary">
-            {proposalCount.toLocaleString()}
+            {proposals.length}
           </p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
