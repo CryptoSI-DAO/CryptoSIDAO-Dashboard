@@ -22,68 +22,68 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <button
         onClick={onClose}
-        className="text-sm text-accent-purple hover:text-accent-pink"
+        className="text-sm text-accent-purple hover:text-accent-pink flex items-center gap-1"
       >
         &larr; Back to proposals
       </button>
 
-      <div className="bg-bg-card rounded-xl border border-border p-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div>
-            <p className="text-sm text-text-secondary mb-1">
+            <p className="text-xs md:text-sm text-text-secondary mb-1">
               Proposal #{proposal.id}
             </p>
-            <h1 className="text-2xl font-bold text-text-primary">
+            <h1 className="text-xl md:text-2xl font-bold text-text-primary">
               Proposal #{proposal.id}
             </h1>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[proposal.status]}`}
+            className={`px-3 py-1 rounded-full text-sm font-medium self-start ${statusColors[proposal.status]}`}
           >
             {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
           <div>
             <p className="text-text-secondary">Created by</p>
             <a
               href={getArbiscanUrl("address", proposal.creator)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-purple hover:text-accent-pink font-mono"
+              className="text-accent-purple hover:text-accent-pink font-mono text-xs md:text-sm break-all"
             >
               {shortenAddress(proposal.creator)}
             </a>
           </div>
           <div>
             <p className="text-text-secondary">Voting Start</p>
-            <p className="text-text-primary font-medium">
+            <p className="text-text-primary font-medium text-xs md:text-sm">
               {formatTimestamp(proposal.votingStart)}
             </p>
           </div>
           <div>
             <p className="text-text-secondary">Voting End</p>
-            <p className="text-text-primary font-medium">
+            <p className="text-text-primary font-medium text-xs md:text-sm">
               {formatTimestamp(proposal.votingEnd)}
             </p>
           </div>
           <div>
             <p className="text-text-secondary">Executed</p>
-            <p className="text-text-primary font-medium">
+            <p className="text-text-primary font-medium text-xs md:text-sm">
               {proposal.executed ? "Yes" : "No"}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-bg-card rounded-xl border border-border p-6">
-        <h2 className="text-lg font-bold text-text-primary mb-4">Vote Results</h2>
+      <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
+        <h2 className="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">Vote Results</h2>
 
-        <div className="flex h-4 rounded-full overflow-hidden mb-4">
+        <div className="flex h-3 md:h-4 rounded-full overflow-hidden mb-3 md:mb-4">
           {proposal.yesPercent > 0 && (
             <div className="vote-bar-yes" style={{ width: `${proposal.yesPercent}%` }} />
           )}
@@ -95,78 +95,78 @@ function ProposalDetail({ proposal, onClose }: { proposal: ProposalWithVotes; on
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-bg-secondary rounded-lg p-4 border border-success/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 rounded-full bg-success" />
-              <span className="text-sm font-medium text-success">For</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-bg-secondary rounded-lg p-3 md:p-4 border border-success/20">
+            <div className="flex items-center gap-2 mb-1 md:mb-2">
+              <div className="w-3 h-3 rounded-full bg-success flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium text-success">For</span>
             </div>
-            <p className="text-2xl font-bold text-text-primary">
+            <p className="text-xl md:text-2xl font-bold text-text-primary">
               {proposal.yesPercent.toFixed(1)}%
             </p>
-            <p className="text-xs text-text-secondary font-mono">
+            <p className="text-[10px] md:text-xs text-text-secondary font-mono truncate">
               {proposal.tally.yes.toString()}
             </p>
           </div>
-          <div className="bg-bg-secondary rounded-lg p-4 border border-text-secondary/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 rounded-full bg-text-secondary" />
-              <span className="text-sm font-medium text-text-secondary">Abstain</span>
+          <div className="bg-bg-secondary rounded-lg p-3 md:p-4 border border-text-secondary/20">
+            <div className="flex items-center gap-2 mb-1 md:mb-2">
+              <div className="w-3 h-3 rounded-full bg-text-secondary flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium text-text-secondary">Abstain</span>
             </div>
-            <p className="text-2xl font-bold text-text-primary">
+            <p className="text-xl md:text-2xl font-bold text-text-primary">
               {proposal.abstainPercent.toFixed(1)}%
             </p>
-            <p className="text-xs text-text-secondary font-mono">
+            <p className="text-[10px] md:text-xs text-text-secondary font-mono truncate">
               {proposal.tally.abstain.toString()}
             </p>
           </div>
-          <div className="bg-bg-secondary rounded-lg p-4 border border-danger/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 rounded-full bg-danger" />
-              <span className="text-sm font-medium text-danger">Against</span>
+          <div className="bg-bg-secondary rounded-lg p-3 md:p-4 border border-danger/20">
+            <div className="flex items-center gap-2 mb-1 md:mb-2">
+              <div className="w-3 h-3 rounded-full bg-danger flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium text-danger">Against</span>
             </div>
-            <p className="text-2xl font-bold text-text-primary">
+            <p className="text-xl md:text-2xl font-bold text-text-primary">
               {proposal.noPercent.toFixed(1)}%
             </p>
-            <p className="text-xs text-text-secondary font-mono">
+            <p className="text-[10px] md:text-xs text-text-secondary font-mono truncate">
               {proposal.tally.no.toString()}
             </p>
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="flex justify-between text-sm">
+        <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-border">
+          <div className="flex justify-between text-xs md:text-sm">
             <span className="text-text-secondary">Total votes cast</span>
             <span className="text-text-primary font-mono">{proposal.totalVotes.toString()}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-bg-card rounded-xl border border-border p-6">
-        <h2 className="text-lg font-bold text-text-primary mb-4">On-Chain Info</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+      <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
+        <h2 className="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">On-Chain Info</h2>
+        <div className="space-y-3 text-sm">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
             <span className="text-text-secondary">DAO Address</span>
             <a
               href={getArbiscanUrl("address", "0xA736319152057f9c3beb556EeE76Ea56598FFa13")}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-purple hover:text-accent-pink font-mono"
+              className="text-accent-purple hover:text-accent-pink font-mono text-xs break-all"
             >
               0xA736...Fa13
             </a>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
             <span className="text-text-secondary">Network</span>
-            <span className="text-text-primary">Arbitrum One</span>
+            <span className="text-text-primary text-xs md:text-sm">Arbitrum One</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
             <span className="text-text-secondary">Governance Plugin</span>
             <a
               href={getArbiscanUrl("address", "0x1aed2beb470aefd65b43f905bd5371b1e4749d18")}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-purple hover:text-accent-pink font-mono"
+              className="text-accent-purple hover:text-accent-pink font-mono text-xs break-all"
             >
               0x1aed...d18
             </a>
@@ -194,17 +194,17 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
 
   return (
     <div
-      className="bg-bg-card rounded-xl border border-border p-4 hover:border-accent-purple/30 transition-colors cursor-pointer"
+      className="bg-bg-card rounded-xl border border-border p-3 md:p-4 hover:border-accent-purple/30 transition-colors cursor-pointer"
       onClick={onSelect}
     >
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <span className="text-text-primary font-semibold">Proposal #{proposal.id}</span>
-        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[statusLabels[proposal.status]]}`}>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-text-primary font-semibold text-sm md:text-base">Proposal #{proposal.id}</span>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium border flex-shrink-0 ${statusColors[statusLabels[proposal.status]]}`}>
           {statusLabels[proposal.status]}
         </span>
       </div>
 
-      <div className="text-xs text-text-secondary mb-3">
+      <div className="text-[10px] md:text-xs text-text-secondary mb-2 md:mb-3">
         Creator:{" "}
         <a
           href={getArbiscanUrl("address", proposal.creator)}
@@ -215,11 +215,11 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
         >
           {shortenAddress(proposal.creator)}
         </a>
-        <span className="mx-2">&middot;</span>
+        <span className="mx-1 md:mx-2">&middot;</span>
         {formatTimestamp(proposal.votingEnd)}
       </div>
 
-      <div className="flex h-2 rounded-full overflow-hidden mb-2">
+      <div className="flex h-1.5 md:h-2 rounded-full overflow-hidden mb-1.5 md:mb-2">
         {proposal.yesPercent > 0 && (
           <div className="vote-bar-yes" style={{ width: `${proposal.yesPercent}%` }} />
         )}
@@ -231,7 +231,7 @@ function ProposalRow({ proposal, onSelect }: { proposal: ProposalWithVotes; onSe
         )}
       </div>
 
-      <div className="flex justify-between text-xs text-text-secondary">
+      <div className="flex justify-between text-[10px] md:text-xs text-text-secondary">
         <span className="text-success">For: {proposal.yesPercent.toFixed(1)}%</span>
         <span>Abstain: {proposal.abstainPercent.toFixed(1)}%</span>
         <span className="text-danger">Against: {proposal.noPercent.toFixed(1)}%</span>
@@ -283,10 +283,10 @@ export default function ProposalsPage() {
 
   if (selectedProposal) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Proposals</h1>
-          <p className="text-sm text-text-secondary mt-1">{proposals.length} total proposals</p>
+          <h1 className="text-xl md:text-2xl font-bold text-text-primary">Proposals</h1>
+          <p className="text-xs md:text-sm text-text-secondary mt-1">{proposals.length} total proposals</p>
         </div>
         <ProposalDetail proposal={selectedProposal} onClose={() => setSelectedId(null)} />
       </div>
@@ -294,21 +294,21 @@ export default function ProposalsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Proposals</h1>
-        <p className="text-sm text-text-secondary mt-1">
+        <h1 className="text-xl md:text-2xl font-bold text-text-primary">Proposals</h1>
+        <p className="text-xs md:text-sm text-text-secondary mt-1">
           {proposals.length} total proposals
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Filters — horizontal scroll on mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
         {(["all", "active", "pending", "executed", "defeated"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
               filter === f
                 ? "bg-accent-purple text-white"
                 : "bg-bg-card text-text-secondary hover:text-text-primary border border-border"
@@ -320,7 +320,7 @@ export default function ProposalsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-bg-card rounded-xl border border-border p-12 text-center">
+        <div className="bg-bg-card rounded-xl border border-border p-8 md:p-12 text-center">
           <p className="text-text-secondary">Loading proposals...</p>
         </div>
       ) : filtered.length > 0 ? (
@@ -330,11 +330,11 @@ export default function ProposalsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-bg-card rounded-xl border border-border p-12 text-center">
+        <div className="bg-bg-card rounded-xl border border-border p-8 md:p-12 text-center">
           <p className="text-text-secondary mb-2">
             {filter === "all" ? "No proposals found" : "No proposals match this filter"}
           </p>
-          <p className="text-sm text-text-secondary/60">
+          <p className="text-xs md:text-sm text-text-secondary/60">
             Proposals will appear here once they are created on-chain.
           </p>
         </div>
