@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDaoMetadata, getAllProposals, getMembers, getAssets, type DaoMetadata, type Proposal, type Member, type Asset } from "@/lib/dao";
+import { getDaoMetadata, getAllProposals, getAssets, type DaoMetadata, type Proposal, type Asset } from "@/lib/dao";
+import { getMembers, type Member } from "@/lib/members";
 import { ProposalCard } from "@/components/ProposalCard";
 
 export default function DashboardPage() {
@@ -20,7 +21,7 @@ export default function DashboardPage() {
     ]).then(([m, p, mem, a]) => {
       setMetadata(m);
       setProposals(p);
-      setMembers(mem);
+      setMembers(Array.isArray(mem) ? mem : mem.members);
       setAssets(a);
       setLoading(false);
     });
