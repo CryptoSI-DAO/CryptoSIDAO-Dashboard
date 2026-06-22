@@ -81,7 +81,6 @@ export default function AssetsPage() {
         </div>
       )}
 
-      {/* Treasury Summary */}
       <div className="bg-bg-card rounded-xl border border-border p-4 md:p-6">
         <h3 className="text-base font-bold text-text-primary mb-3">Treasury Summary</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1,36 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDaoMetadata, getAllProposals, getAssets, type DaoMetadata, type Proposal, type Asset } from "@/lib/dao";
-import { getMembers, type Member } from "@/lib/members";
-import { ProposalCard } from "@/components/ProposalCard";
+import { getDaoMetadata, getAssets, type DaoMetadata, type Asset } from "@/lib/dao";
 
 export default function DashboardPage() {
   const [metadata, setMetadata] = useState<DaoMetadata | null>(null);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getDaoMetadata().catch(() => null),
-      getAllProposals().catch(() => []),
-      getMembers().catch(() => []),
       getAssets().catch(() => []),
-    ]).then(([m, p, mem, a]) => {
+    ]).then(([m, a]) => {
       setMetadata(m);
-      setProposals(p);
-      setMembers(Array.isArray(mem) ? mem : mem.members);
       setAssets(a);
       setLoading(false);
     });
   }, []);
-
-  const activeProposals = proposals.filter(
-    (p) => p.status === "active" || p.status === "pending"
-  );
-  const recentProposals = proposals.slice(0, 4);
 
   if (loading) {
     return (
@@ -90,65 +77,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
           <p className="text-xs text-text-secondary mb-1">Proposals</p>
-          <p className="text-2xl md:text-3xl font-bold text-text-primary">{proposals.length}</p>
-        </div>
-        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
-          <p className="text-xs text-text-secondary mb-1">Active</p>
-          <p className="text-2xl md:text-3xl font-bold text-accent-purple">{activeProposals.length}</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">—</p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
           <p className="text-xs text-text-secondary mb-1">Members</p>
-          <p className="text-2xl md:text-3xl font-bold text-text-primary">{members.length}</p>
+          <p className="text-2xl md:text-3xl font-bold text-text-primary">—</p>
         </div>
         <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
           <p className="text-xs text-text-secondary mb-1">Assets</p>
           <p className="text-2xl md:text-3xl font-bold text-text-primary">{assets.length}</p>
         </div>
+        <div className="bg-bg-card rounded-xl border border-border p-4 md:p-5">
+          <p className="text-xs text-text-secondary mb-1">Network</p>
+          <p className="text-lg md:text-2xl font-bold text-accent-purple">Arbitrum</p>
+        </div>
       </div>
 
-      {/* Recent Proposals */}
-      {recentProposals.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-lg md:text-xl font-bold text-text-primary">Recent Proposals</h2>
-            <a href="/proposals" className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors">
-              View All &rarr;
-            </a>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {recentProposals.map((proposal) => (
-              <ProposalCard key={proposal.id} proposal={proposal} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Top Members */}
-      {members.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-lg md:text-xl font-bold text-text-primary">Top Members</h2>
-            <a href="/members" className="text-xs md:text-sm text-accent-purple hover:text-accent-pink transition-colors">
-              View All &rarr;
-            </a>
-          </div>
-          <div className="bg-bg-card rounded-xl border border-border divide-y divide-border/50">
-            {members.slice(0, 5).map((member, index) => (
-              <div key={member.address} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-text-secondary font-mono w-5">#{index + 1}</span>
-                  <span className="text-sm text-text-primary font-mono">
-                    {member.address.slice(0, 6)}...{member.address.slice(-4)}
-                  </span>
-                </div>
-                <span className="text-sm text-text-secondary font-mono">{member.balance} CRDD</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Assets Preview */}
+      {/* Treasury Assets */}
       {assets.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -158,7 +103,7 @@ export default function DashboardPage() {
             </a>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            {assets.slice(0, 4).map((asset, index) => (
+            {assets.map((asset, index) => (
               <div key={`${asset.address}-${index}`} className="bg-bg-card rounded-xl border border-border p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -174,6 +119,33 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Coming Soon Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <a href="/proposals" className="bg-bg-card rounded-xl border border-border p-4 md:p-5 hover:border-accent-purple/30 transition-colors group">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent-purple transition-colors">Proposals</h3>
+              <p className="text-xs text-text-secondary mt-1">Functionality coming soon</p>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary group-hover:text-accent-purple transition-colors">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </a>
+
+        <a href="/members" className="bg-bg-card rounded-xl border border-border p-4 md:p-5 hover:border-accent-purple/30 transition-colors group">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent-purple transition-colors">Members</h3>
+              <p className="text-xs text-text-secondary mt-1">Functionality coming soon</p>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary group-hover:text-accent-purple transition-colors">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </a>
+      </div>
     </div>
   );
 }
